@@ -1,0 +1,121 @@
+
+---------------------------------------------------------------------------------------------
+client concerns:
+---------------------------------------------------------------------------------------------
+
+Generated key:
+ 
+C:\Program Files\Java\jdk1.8.0_211\bin>keytool -genkeypair -v -keystore release_key_rem.keystore -alias my_alias_rem -keyalg RSA -keysize 2048 -validity 10000
+Enter keystore password: remkeystorepassword
+Re-enter new password: remkeystorepassword
+What is your first and last name?
+  [Unknown]:  rem
+What is the name of your organizational unit?
+  [Unknown]:  rem
+What is the name of your organization?
+  [Unknown]:  rem
+What is the name of your City or Locality?
+  [Unknown]:  Sibiu
+What is the name of your State or Province?
+  [Unknown]:  Sibiu
+What is the two-letter country code for this unit?
+  [Unknown]:  SB
+Is CN=rem, OU=rem, O=rem, L=Sibiu, ST=Sibiu, C=SB correct?
+  [no]:  y
+
+Generating 2,048 bit RSA key pair and self-signed certificate (SHA256withRSA) with a validity of 10,000 days
+        for: CN=rem, OU=rem, O=rem, L=Sibiu, ST=Sibiu, C=SB
+Enter key password for <my_alias_rem>
+        (RETURN if same as keystore password):
+[Storing release_key_rem.keystore]
+
+Warning:
+The JKS keystore uses a proprietary format. It is recommended to migrate to PKCS12 which is an industry standard format using "keytool -importkeystore -srckeystore release_key_rem.keystore -destkeystore release_key_rem.keystore -deststoretype pkcs12".
+---------------------------------------------------------------------------------------------
+dev implementations:
+---------------------------------------------------------------------------------------------
+
+C:\Program Files\Java\jdk1.8.0_211\bin>
+
+//////////////////////////////-----------------------------------///////////////////////////
+https://dev.to/zilurrane/generate-release-mode-apk-for-react-native-project-to-publish-on-playstore-5f78
+https://medium.com/@impaachu/react-native-android-release-build-crash-on-device-14f2c9eacf18
+
+
+projRoot\android>gradlew bundleRelease // gradlew clean  && gradlew bundleRelease && gradlew assembleRelease
+projRoot\android>gradlew assembleRelease // gradlew clean && gradlew assembleRelease
+
+outputs in C:\Users\currentUser\Desktop\REACT NATIVE\without expo\projRoot\android\app\build\outputs\apk
+
+disable Google Protect from Google Play Store app in android 9 PIE if app is not installed
+ 
+ 
+//////////////////////////////-----------------------------------///////////////////////////
+android/app/gradle.properties add:
+MYAPP_UPLOAD_STORE_FILE=release_key_rem.keystore
+MYAPP_UPLOAD_KEY_ALIAS=my_alias_rem
+MYAPP_UPLOAD_STORE_PASSWORD=remkeystorepassword
+MYAPP_UPLOAD_KEY_PASSWORD=remkeystorepassword
+
+
+
+//////////////////////////////-----------------------------------///////////////////////////
+app/build.gradle add:
+ signingConfigs {
+        debug {
+            storeFile file('debug.keystore')
+            storePassword 'android'
+            keyAlias 'androiddebugkey'
+            keyPassword 'android'
+        }
+          release {
+            if (project.hasProperty('MYAPP_UPLOAD_STORE_FILE')) {
+                storeFile file(MYAPP_UPLOAD_STORE_FILE)
+                storePassword MYAPP_UPLOAD_STORE_PASSWORD
+                keyAlias MYAPP_UPLOAD_KEY_ALIAS
+                keyPassword MYAPP_UPLOAD_KEY_PASSWORD
+            }
+        }
+    }
+    buildTypes {
+        debug {
+            signingConfig signingConfigs.debug
+        }
+        release {
+            // Caution! In production, you need to generate your own keystore file.
+            // see https://facebook.github.io/react-native/docs/signed-apk-android.
+         
+            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
+            minifyEnabled enableProguardInReleaseBuilds
+            proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+        }
+    }
+
+
+///generate SH1 for google signIn //optional only in case of particular  GoogleSignin.configure({...}) configs
+
+keytool -exportcert -alias debug -keystore release_key_datingApp.keystore -list -v
+
+or: > ./gradlew signingReport
+
+///generate Key Hashes for Facebook SDK running in  C:\Program Files\Java\jdk1.8.0_211\bin>    
+debug:
+keytool -exportcert -alias androiddebugkey -keystore "D:\W\seraMobile\sera-mobile\android\app\debug.keystore" | "C:\Program Files\Java\openssl-0.9.8k_X64\bin\openssl" sha1 -binary | "C:\Program Files\Java\openssl-0.9.8k_X64\bin\openssl" base64
+//outputed: Xo8WBi6jzSxKDVR4drqm84yr9iU=
+
+release:
+keytool -exportcert -alias my_alias_datingApp -keystore "D:\W\seraMobile\sera-mobile\android\app\release_key_datingApp.keystore" | "C:\Program Files\Java\openssl-0.9.8k_X64\bin\openssl" sha1 -binary | "C:\Program Files\Java\openssl-0.9.8k_X64\bin\openssl" base64
+//outputed ogGg9LirXR09Ald78MhzBB/FxLo
+//onRun Requested :  lW8i3oyzAhJPl68hI+rtaz50tek=
+
+
+
+
+
+doc from GrSp () tech meeting from May 22 2020:
+
+* http://bitwiseshiftleft.github.io/sjcl/demo
+Grant Speer9:42 PM
+1. https://oauth.net/2/
+2. https://alexbilbie.com/guide-to-oauth-2-grants/
